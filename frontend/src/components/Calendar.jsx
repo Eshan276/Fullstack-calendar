@@ -160,11 +160,43 @@ const CalendarComponent = ({ userEmail }) => {
     e.preventDefault();
     const formData = new FormData(e.target);
 
+    // Get start and end times from the form
+    const startTime = formData.get("start_time");
+    let endTime = formData.get("end_time");
+
+    // Parse the selected start date
+    const startDate = new Date(selectedSlot.start);
+
+    // Set the start time to the selected start date
+    startDate.setHours(startTime.split(":")[0], startTime.split(":")[1]);
+
+    // If no end time is provided, set the end time to 1 hour after the start time
+    let endDate;
+    if (!endTime) {
+      endDate = new Date(startDate);
+      endDate.setHours(startDate.getHours() + 1); // Add 1 hour
+    } else {
+      endDate = new Date(startDate);
+      endDate.setHours(endTime.split(":")[0], endTime.split(":")[1]);
+    }
+
+    // Ensure that the end time is not before the start time
+    if (endDate < startDate) {
+      alert("End time cannot be earlier than start time.");
+      return;
+    }
+
+    // Ensure start and end dates are the same (within the same day)
+    if (endDate.getDate() !== startDate.getDate()) {
+      alert("End time must be within the same day as the start time.");
+      return;
+    }
+
     const newEvent = {
       title: formData.get("title"),
       description: formData.get("description"),
-      start_time: selectedSlot.start.toISOString(),
-      end_time: selectedSlot.end.toISOString(),
+      start_time: startDate.toISOString(),
+      end_time: endDate.toISOString(),
     };
 
     try {
@@ -176,6 +208,17 @@ const CalendarComponent = ({ userEmail }) => {
     } catch (error) {
       console.error("Error creating event:", error);
       setError("Failed to create event. Please try again.");
+    }
+  };
+
+  const handleEndTimeChange = (e) => {
+    const endTime = e.target.value;
+    const startTime = document.querySelector('input[name="start_time"]').value;
+
+    // Ensure that the end time is not earlier than the start time
+    if (endTime < startTime) {
+      alert("End time cannot be earlier than start time.");
+      e.target.value = ""; // Reset end time if invalid
     }
   };
 
@@ -208,8 +251,12 @@ const CalendarComponent = ({ userEmail }) => {
             borderRadius: "10px",
             width: "400px",
             margin: "auto",
+            zIndex: "1000", // Ensure the modal is on top
           },
-          overlay: { backgroundColor: "rgba(0, 0, 0, 0.5)" },
+          overlay: {
+            backgroundColor: "rgba(0, 0, 0, 0.8)", // Darken the overlay
+            zIndex: "999", // Ensure the overlay is below the modal but above other content
+          },
         }}
       >
         <h2 style={{ color: "#333" }}>Create New Event</h2>
@@ -230,6 +277,24 @@ const CalendarComponent = ({ userEmail }) => {
               style={{ color: "#000", backgroundColor: "#f0f0f0" }}
             />
           </div>
+          <div>
+            <label style={{ color: "#007BFF" }}>Start Time: </label>
+            <input
+              type="time"
+              name="start_time"
+              required
+              style={{ color: "#000", backgroundColor: "#f0f0f0" }}
+            />
+          </div>
+          <div>
+            <label style={{ color: "#007BFF" }}>End Time: </label>
+            <input
+              type="time"
+              name="end_time"
+              style={{ color: "#000", backgroundColor: "#f0f0f0" }}
+              onChange={handleEndTimeChange}
+            />
+          </div>
           <button
             type="submit"
             style={{
@@ -238,6 +303,7 @@ const CalendarComponent = ({ userEmail }) => {
               padding: "10px",
               border: "none",
               borderRadius: "5px",
+              marginTop: "10px",
             }}
           >
             Create Event
@@ -252,6 +318,7 @@ const CalendarComponent = ({ userEmail }) => {
               border: "none",
               borderRadius: "5px",
               marginLeft: "10px",
+              marginTop: "10px",
             }}
           >
             Cancel
