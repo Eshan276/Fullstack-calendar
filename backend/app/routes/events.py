@@ -1,4 +1,3 @@
-# app/routes/events.py
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel, EmailStr
 from app.database import event_collection, user_collection
@@ -21,6 +20,8 @@ class EventCreate(BaseModel):
     description: str
     start_time: datetime
     end_time: datetime
+    type: str  # New field
+    color: str  # New field
 
 
 class Event(EventCreate):
@@ -58,14 +59,26 @@ async def get_events(start_date: datetime, end_date: datetime, email: EmailStr):
         "user_id": user.id,
         "start_time": {"$gte": start_date, "$lt": end_date}
     }).to_list(None)
-    return [Event(**event, id=str(event["_id"])) for event in events]
+
+    # Handle missing `event_type` and `color` fields in older documents
+    return [
+        Event(**{**event, "id": str(event["_id"]), "event_type": event.get(
+            "event_type", ""), "color": event.get("color", "")})
+        for event in events
+    ]
 
 
 @router.get("/user/events/", response_model=list[Event])
 async def get_user_events(email: EmailStr):
     user = await get_user(email)
     events = await event_collection.find({"user_id": user.id}).to_list(None)
-    return [Event(**event, id=str(event["_id"])) for event in events]
+
+    # Handle missing `event_type` and `color` fields in older documents
+    return [
+        Event(**{**event, "id": str(event["_id"]), "event_type": event.get(
+            "event_type", ""), "color": event.get("color", "")})
+        for event in events
+    ]
 
 
 @router.post("/users/", response_model=User)
@@ -88,7 +101,7 @@ async def update_event(event_id: str, event: EventCreate, email: EmailStr):
         return_document=True
     )
     if updated_event:
-        return Event(**updated_event, id=str(updated_event["_id"]))
+        return Event(**{**updated_event, "id": str(updated_event["_id"]), "event_type": updated_event.get("event_type", ""), "color": updated_event.get("color", "")})
     raise HTTPException(status_code=404, detail="Event not found")
 
 
