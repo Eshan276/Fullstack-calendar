@@ -59,6 +59,7 @@ const buttonStyles = (bgColor) => ({
 
 const CalendarComponent = ({ userEmail }) => {
   const [events, setEvents] = useState([]);
+  const [filteredEvents, setFilteredEvents] = useState([]);
   const [view, setView] = useState("month");
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isCustomTypeModalOpen, setIsCustomTypeModalOpen] = useState(false);
@@ -67,6 +68,7 @@ const CalendarComponent = ({ userEmail }) => {
   const [customTypes, setCustomTypes] = useState([]); // Array to store custom types
   const [newType, setNewType] = useState("");
   const [newColor, setNewColor] = useState("#000000"); // Default color
+  const [selectedTypes, setSelectedTypes] = useState(new Set()); // Set to track selected types
 
   const localizer = dateFnsLocalizer({
     format,
@@ -82,6 +84,10 @@ const CalendarComponent = ({ userEmail }) => {
     fetchEvents();
   }, [view, userEmail]);
 
+  useEffect(() => {
+    filterEvents();
+  }, [events, selectedTypes]);
+
   const fetchEvents = async () => {
     try {
       const response = await axios.get("http://localhost:8000/user/events/", {
@@ -90,9 +96,12 @@ const CalendarComponent = ({ userEmail }) => {
       console.log(response.data);
       for (let i = 0; i < response.data.length; i++) {
         if (
-          response.data[i].type != "task" &&
-          response.data[i].type != "meeting" &&
-          response.data[i].type != "reminder"
+          response.data[i].type !== "task" &&
+          response.data[i].type !== "meeting" &&
+          response.data[i].type !== "reminder" &&
+          !customTypes.some(
+            (customType) => customType.name === response.data[i].type
+          )
         ) {
           setCustomTypes([
             ...customTypes,
@@ -110,6 +119,16 @@ const CalendarComponent = ({ userEmail }) => {
     } catch (error) {
       console.error("Error fetching events:", error);
       setError("Failed to fetch events. Please check your backend connection.");
+    }
+  };
+
+  const filterEvents = () => {
+    if (selectedTypes.size === 0) {
+      setFilteredEvents(events);
+    } else {
+      setFilteredEvents(
+        events.filter((event) => selectedTypes.has(event.type))
+      );
     }
   };
 
@@ -158,7 +177,6 @@ const CalendarComponent = ({ userEmail }) => {
       return;
     }
 
-    // Assign colors based on the selected event type
     let color = "#007BFF"; // Default color
     const type = formData.get("type");
 
@@ -234,7 +252,16 @@ const CalendarComponent = ({ userEmail }) => {
     }
   };
 
-  // Customize event colors based on the event type
+  const handleTypeChange = (type) => {
+    const updatedSelectedTypes = new Set(selectedTypes);
+    if (updatedSelectedTypes.has(type)) {
+      updatedSelectedTypes.delete(type);
+    } else {
+      updatedSelectedTypes.add(type);
+    }
+    setSelectedTypes(updatedSelectedTypes);
+  };
+
   const eventPropGetter = (event) => {
     const backgroundColor = event.color || "#007BFF"; // Default to blue if color is not set
     return {
@@ -250,30 +277,92 @@ const CalendarComponent = ({ userEmail }) => {
   }
 
   return (
-    <div style={{ height: "500px" }}>
-      <DndProvider backend={HTML5Backend}>
-        <DnDCalendar
-          localizer={localizer}
-          events={events}
-          startAccessor="start"
-          endAccessor="end"
-          selectable
-          onSelectSlot={handleSelect}
-          onEventDrop={handleEventDrop}
-          resizable
-          view={view}
-          onView={setView}
-          eventPropGetter={eventPropGetter} // Add this line to customize event colors
-          style={{ color: "#000", backgroundColor: "#f5f5f5" }}
-        />
-      </DndProvider>
-
+    <div style={{ display: "flex", height: "500px" }}>
+      <div style={{ flex: 1 }}>
+        <DndProvider backend={HTML5Backend}>
+          <DnDCalendar
+            localizer={localizer}
+            events={filteredEvents}
+            startAccessor="start"
+            endAccessor="end"
+            selectable
+            onSelectSlot={handleSelect}
+            onEventDrop={handleEventDrop}
+            resizable
+            view={view}
+            onView={setView}
+            eventPropGetter={eventPropGetter} // Add this line to customize event colors
+            style={{ color: "#000", backgroundColor: "#f5f5f5" }}
+          />
+        </DndProvider>
+      </div>
+      <div
+        style={{
+          width: "250px",
+          padding: "20px",
+          borderLeft: "1px solid #ccc",
+        }}
+      >
+        <h3 style={{ color: "#333" }}>Event Types</h3>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={selectedTypes.has("task")}
+              onChange={() => handleTypeChange("task")}
+            />
+            Task
+          </label>
+        </div>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={selectedTypes.has("meeting")}
+              onChange={() => handleTypeChange("meeting")}
+            />
+            Meeting
+          </label>
+        </div>
+        <div>
+          <label>
+            <input
+              type="checkbox"
+              checked={selectedTypes.has("reminder")}
+              onChange={() => handleTypeChange("reminder")}
+            />
+            Reminder
+          </label>
+        </div>
+        <h3 style={{ color: "#333" }}>Custom Types</h3>
+        {customTypes.map((customType, index) => (
+          <div key={index}>
+            <label>
+              <input
+                type="checkbox"
+                checked={selectedTypes.has(customType.name)}
+                onChange={() => handleTypeChange(customType.name)}
+              />
+              {customType.name}
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "20px",
+                  height: "20px",
+                  backgroundColor: customType.color,
+                  marginLeft: "10px",
+                }}
+              ></span>
+            </label>
+          </div>
+        ))}
+      </div>
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleModalClose}
         style={modalStyles}
       >
-        <h2 style={{ color: "#333" }}>Create New Event</h2>
+        <h2 style={{ color: "#333" }}>Create Event</h2>
         <form onSubmit={handleEventCreate}>
           <div>
             <label style={{ color: "#007BFF" }}>Title: </label>
@@ -286,22 +375,15 @@ const CalendarComponent = ({ userEmail }) => {
           <div>
             <label style={{ color: "#007BFF" }}>Type: </label>
             <select name="type" required style={inputStyles}>
-              <option value="task">Task (Blue)</option>
-              <option value="meeting">Meeting (Green)</option>
-              <option value="reminder">Reminder (Red)</option>
-              {customTypes.map((type) => (
-                <option key={type.name} value={type.name}>
-                  {type.name} ({type.color})
+              <option value="task">Task</option>
+              <option value="meeting">Meeting</option>
+              <option value="reminder">Reminder</option>
+              {customTypes.map((customType, index) => (
+                <option key={index} value={customType.name}>
+                  {customType.name}
                 </option>
               ))}
             </select>
-            <button
-              type="button"
-              onClick={() => setIsCustomTypeModalOpen(true)}
-              style={buttonStyles("#007BFF")}
-            >
-              + Add Custom Type
-            </button>
           </div>
           <div>
             <label style={{ color: "#007BFF" }}>Start Time: </label>
