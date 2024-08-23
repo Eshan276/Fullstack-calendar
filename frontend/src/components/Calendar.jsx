@@ -61,8 +61,22 @@ const CalendarComponent = ({ userEmail }) => {
   const [events, setEvents] = useState([]);
   const [view, setView] = useState("month");
   const [modalIsOpen, setModalIsOpen] = useState(false);
+  const [isCustomTypeModalOpen, setIsCustomTypeModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [error, setError] = useState(null);
+  const [customTypes, setCustomTypes] = useState([]); // Array to store custom types
+  const [newType, setNewType] = useState("");
+  const [newColor, setNewColor] = useState("#000000"); // Default color
+
+  const localizer = dateFnsLocalizer({
+    format,
+    parse,
+    startOfWeek,
+    getDay,
+    locales: {
+      "en-US": enUS,
+    },
+  });
 
   useEffect(() => {
     fetchEvents();
@@ -73,6 +87,19 @@ const CalendarComponent = ({ userEmail }) => {
       const response = await axios.get("http://localhost:8000/user/events/", {
         params: { email: userEmail },
       });
+      console.log(response.data);
+      for (let i = 0; i < response.data.length; i++) {
+        if (
+          response.data[i].type != "task" &&
+          response.data[i].type != "meeting" &&
+          response.data[i].type != "reminder"
+        ) {
+          setCustomTypes([
+            ...customTypes,
+            { name: response.data[i].type, color: response.data[i].color },
+          ]);
+        }
+      }
       setEvents(
         response.data.map((event) => ({
           ...event,
@@ -94,6 +121,12 @@ const CalendarComponent = ({ userEmail }) => {
   const handleModalClose = () => {
     setModalIsOpen(false);
     setSelectedSlot(null);
+  };
+
+  const handleCustomTypeModalClose = () => {
+    setIsCustomTypeModalOpen(false);
+    setNewType("");
+    setNewColor("#000000");
   };
 
   const handleEventCreate = async (e) => {
@@ -129,18 +162,23 @@ const CalendarComponent = ({ userEmail }) => {
     let color = "#007BFF"; // Default color
     const type = formData.get("type");
 
-    switch (type) {
-      case "task":
-        color = "#007BFF"; // Blue for Task
-        break;
-      case "meeting":
-        color = "#28a745"; // Green for Meeting
-        break;
-      case "reminder":
-        color = "#dc3545"; // Red for Reminder
-        break;
-      default:
-        break;
+    const customType = customTypes.find((custom) => custom.name === type);
+    if (customType) {
+      color = customType.color;
+    } else {
+      switch (type) {
+        case "task":
+          color = "#007BFF"; // Blue for Task
+          break;
+        case "meeting":
+          color = "#28a745"; // Green for Meeting
+          break;
+        case "reminder":
+          color = "#dc3545"; // Red for Reminder
+          break;
+        default:
+          break;
+      }
     }
 
     const newEvent = {
@@ -251,7 +289,19 @@ const CalendarComponent = ({ userEmail }) => {
               <option value="task">Task (Blue)</option>
               <option value="meeting">Meeting (Green)</option>
               <option value="reminder">Reminder (Red)</option>
+              {customTypes.map((type) => (
+                <option key={type.name} value={type.name}>
+                  {type.name} ({type.color})
+                </option>
+              ))}
             </select>
+            <button
+              type="button"
+              onClick={() => setIsCustomTypeModalOpen(true)}
+              style={buttonStyles("#007BFF")}
+            >
+              + Add Custom Type
+            </button>
           </div>
           <div>
             <label style={{ color: "#007BFF" }}>Start Time: </label>
@@ -262,8 +312,8 @@ const CalendarComponent = ({ userEmail }) => {
             <input
               type="time"
               name="end_time"
-              style={inputStyles}
               onChange={handleEndTimeChange}
+              style={inputStyles}
             />
           </div>
           <button type="submit" style={buttonStyles("#007BFF")}>
@@ -272,6 +322,57 @@ const CalendarComponent = ({ userEmail }) => {
           <button
             type="button"
             onClick={handleModalClose}
+            style={buttonStyles("#FF0000")}
+          >
+            Cancel
+          </button>
+        </form>
+      </Modal>
+
+      <Modal
+        isOpen={isCustomTypeModalOpen}
+        onRequestClose={handleCustomTypeModalClose}
+        style={modalStyles}
+      >
+        <h2 style={{ color: "#333" }}>Add Custom Type</h2>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            setCustomTypes([
+              ...customTypes,
+              { name: newType, color: newColor },
+            ]);
+            setNewType("");
+            setNewColor("#000000"); // Reset color
+            handleCustomTypeModalClose();
+          }}
+        >
+          <div>
+            <label style={{ color: "#007BFF" }}>Type Name: </label>
+            <input
+              type="text"
+              value={newType}
+              onChange={(e) => setNewType(e.target.value)}
+              required
+              style={inputStyles}
+            />
+          </div>
+          <div>
+            <label style={{ color: "#007BFF" }}>Color: </label>
+            <input
+              type="color"
+              value={newColor}
+              onChange={(e) => setNewColor(e.target.value)}
+              required
+              style={inputStyles}
+            />
+          </div>
+          <button type="submit" style={buttonStyles("#007BFF")}>
+            Add Custom Type
+          </button>
+          <button
+            type="button"
+            onClick={handleCustomTypeModalClose}
             style={buttonStyles("#FF0000")}
           >
             Cancel
