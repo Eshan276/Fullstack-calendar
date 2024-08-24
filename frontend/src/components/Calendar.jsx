@@ -113,6 +113,7 @@ const CalendarComponent = ({ userEmail }) => {
   };
 
   const handleSelect = (slotInfo) => {
+    console.log(slotInfo);
     setSelectedSlot(slotInfo);
     setSelectedEvent(null); // Reset selected event when creating a new event
     setModalIsOpen(true);
@@ -283,7 +284,9 @@ const CalendarComponent = ({ userEmail }) => {
       }
     }
   };
-
+  const messages = {
+    agenda: "Schedule",
+  };
   const handleTypesChange = (type) => {
     const updatedSelectedTypes = new Set(selectedTypes);
     if (updatedSelectedTypes.has(type)) {
@@ -328,6 +331,7 @@ const CalendarComponent = ({ userEmail }) => {
               defaultView={view}
               onView={(newView) => setView(newView)}
               eventPropGetter={eventPropGetter}
+              messages={messages}
             />
           </DndProvider>
         </div>
@@ -427,13 +431,18 @@ const CalendarComponent = ({ userEmail }) => {
               name="start_time"
               type="time"
               defaultValue={
-                selectedEvent
+                (view == "day" || view == "week") && selectedSlot
+                  ? format(new Date(selectedSlot.start), "HH:mm")
+                  : selectedEvent
                   ? format(new Date(selectedEvent.start), "HH:mm")
                   : ""
               }
               className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               required
             />
+            {selectedSlot &&
+              selectedSlot.start &&
+              console.log(format(new Date(selectedSlot.start), "HH:mm"), view)}
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700">
