@@ -12,7 +12,7 @@ import Modal from "react-modal";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
-
+import { darken } from "polished";
 // Date-fns localization
 const locales = {
   "en-US": enUS,
@@ -29,16 +29,19 @@ const DnDCalendar = withDragAndDrop(Calendar);
 
 const modalStyles = {
   content: {
-    color: "#000",
+    color: "#333",
     backgroundColor: "#fff",
-    padding: "20px",
-    borderRadius: "10px",
+    padding: "30px",
+    borderRadius: "15px",
     width: "400px",
+    maxWidth: "90%",
     margin: "auto",
     zIndex: "1000",
+    boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
+    border: "none",
   },
   overlay: {
-    backgroundColor: "rgba(0, 0, 0, 0.8)",
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
     zIndex: "999",
   },
 };
@@ -54,18 +57,42 @@ const plusButtonStyles = {
   lineHeight: "30px",
   cursor: "pointer",
 };
+const formStyles = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "15px",
+};
+
+const labelStyles = {
+  display: "flex",
+  flexDirection: "column",
+  gap: "5px",
+  fontSize: "14px",
+  fontWeight: "bold",
+};
+
 const inputStyles = {
-  color: "#000",
-  backgroundColor: "#f0f0f0",
+  color: "#333",
+  backgroundColor: "#f5f5f5",
+  border: "1px solid #ccc",
+  borderRadius: "5px",
+  padding: "8px 12px",
+  fontSize: "14px",
 };
 
 const buttonStyles = (bgColor) => ({
   color: "#fff",
   backgroundColor: bgColor,
-  padding: "10px",
+  padding: "10px 15px",
   border: "none",
   borderRadius: "5px",
-  marginTop: "10px",
+  marginTop: "15px",
+  fontSize: "16px",
+  cursor: "pointer",
+  transition: "background-color 0.3s",
+  "&:hover": {
+    backgroundColor: darken(0.1, bgColor),
+  },
 });
 
 const CalendarComponent = ({ userEmail }) => {
@@ -333,68 +360,114 @@ const CalendarComponent = ({ userEmail }) => {
 
       {error && <p style={{ color: "red" }}>{error}</p>}
 
-      {/* Type filters */}
-      <div style={{ marginBottom: "10px" }}>
-        <strong>Filter by Type: </strong>
-        <label>
-          <input
-            type="checkbox"
-            checked={selectedTypes.has("task")}
-            onChange={() => handleTypesChange("task")}
-          />
-          Task
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={selectedTypes.has("meeting")}
-            onChange={() => handleTypesChange("meeting")}
-          />
-          Meeting
-        </label>
-        <label>
-          <input
-            type="checkbox"
-            checked={selectedTypes.has("reminder")}
-            onChange={() => handleTypesChange("reminder")}
-          />
-          Reminder
-        </label>
-        {/* Render checkboxes for custom types */}
-        {customTypes.map((customType) => (
-          <label key={customType.name}>
-            <input
-              type="checkbox"
-              checked={selectedTypes.has(customType.name)}
-              onChange={() => handleTypesChange(customType.name)}
+      <div style={{ display: "flex" }}>
+        <div style={{ flex: 1, marginRight: "20px" }}>
+          <DndProvider backend={HTML5Backend}>
+            <DnDCalendar
+              localizer={localizer}
+              events={filteredEvents}
+              startAccessor="start"
+              endAccessor="end"
+              style={{
+                height: "80vh",
+                margin: "20px",
+                color: "#000",
+                backgroundColor: "#f5f5f5",
+              }}
+              selectable
+              onSelectSlot={handleSelect}
+              onSelectEvent={handleEventClick}
+              onEventDrop={handleEventDrop}
+              resizable
+              defaultView={view}
+              onView={(newView) => setView(newView)}
+              eventPropGetter={eventPropGetter}
             />
-            {customType.name}
-          </label>
-        ))}
-      </div>
+          </DndProvider>
+        </div>
 
-      <DndProvider backend={HTML5Backend}>
-        <DnDCalendar
-          localizer={localizer}
-          events={filteredEvents}
-          startAccessor="start"
-          endAccessor="end"
+        <div
           style={{
-            height: "80vh",
-            margin: "20px",
-            color: "#000",
-            backgroundColor: "#f5f5f5",
+            width: "250px",
+            marginLeft: "20px",
+            backgroundColor: "white",
+            padding: "10px",
+            borderRadius: "5px",
+            boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
+            color: "black",
           }}
-          selectable
-          onSelectSlot={handleSelect}
-          onSelectEvent={handleEventClick}
-          onEventDrop={handleEventDrop}
-          resizable
-          defaultView={view}
-          onView={(newView) => setView(newView)}
-          eventPropGetter={eventPropGetter}
-        />
-      </DndProvider>
+        >
+          <strong>Filter by Type: </strong>
+          <div
+            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
+          >
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                color: "black",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedTypes.has("task")}
+                onChange={() => handleTypesChange("task")}
+              />
+              Task
+            </label>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                color: "black",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedTypes.has("meeting")}
+                onChange={() => handleTypesChange("meeting")}
+              />
+              Meeting
+            </label>
+            <label
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "5px",
+                color: "black",
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={selectedTypes.has("reminder")}
+                onChange={() => handleTypesChange("reminder")}
+              />
+              Reminder
+            </label>
+            {/* Render checkboxes for custom types */}
+            {customTypes.map((customType) => (
+              <label
+                key={customType.name}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "5px",
+                  color: "black",
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={selectedTypes.has(customType.name)}
+                  onChange={() => handleTypesChange(customType.name)}
+                />
+                {customType.name}
+              </label>
+            ))}
+          </div>
+        </div>
+      </div>
 
       {/* Create/Edit Event Modal */}
       <Modal
@@ -403,7 +476,7 @@ const CalendarComponent = ({ userEmail }) => {
         style={modalStyles}
       >
         <h2>{selectedEvent ? "Edit Event" : "Create New Event"}</h2>
-        <form onSubmit={handleEventCreateOrEdit}>
+        <form onSubmit={handleEventCreateOrEdit} style={formStyles}>
           <label>
             Title:
             <input
@@ -446,7 +519,7 @@ const CalendarComponent = ({ userEmail }) => {
               +
             </button>
           </label>
-          <label>
+          <label style={labelStyles}>
             Start Time:
             <input
               name="start_time"
@@ -460,7 +533,7 @@ const CalendarComponent = ({ userEmail }) => {
               required
             />
           </label>
-          <label>
+          <label style={labelStyles}>
             End Time:
             <input
               name="end_time"
@@ -473,7 +546,7 @@ const CalendarComponent = ({ userEmail }) => {
               style={inputStyles}
             />
           </label>
-          <label>
+          <label style={labelStyles}>
             Recurrence:
             <select
               name="recurrence"
@@ -515,7 +588,7 @@ const CalendarComponent = ({ userEmail }) => {
             setIsCustomTypeModalOpen(false);
           }}
         >
-          <label>
+          <label style={labelStyles}>
             Type Name:
             <input
               value={newType}
@@ -524,7 +597,7 @@ const CalendarComponent = ({ userEmail }) => {
               style={inputStyles}
             />
           </label>
-          <label>
+          <label style={labelStyles}>
             Color:
             <input
               type="color"
@@ -552,7 +625,7 @@ const LoginComponent = ({ onLogin }) => {
 
   return (
     <form onSubmit={handleSubmit}>
-      <label>Email: </label>
+      <label style={labelStyles}>Email: </label>
       <input
         type="email"
         value={email}
