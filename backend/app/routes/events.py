@@ -82,10 +82,10 @@ def generate_occurrences(event: Event) -> List[Event]:
         # e.g., "daily", "weekly", "monthly"
         recurrence_interval = event.recurrence.lower()
 
-        if recurrence_interval in ["daily", "weekly"]:
+        if recurrence_interval == "daily":
             delta = recurrence_intervals[recurrence_interval]
 
-            for i in range(10):  # Example: generate 10 occurrences
+            for i in range(100):  # Example: generate 10 occurrences
                 occurrence_start = start_time + i * delta
                 occurrence_end = end_time + i * delta
                 occurrences.append({
@@ -99,7 +99,22 @@ def generate_occurrences(event: Event) -> List[Event]:
                     "recurrence": event.recurrence,
                     "user_id": event.user_id
                 })
-
+        elif recurrence_interval == "weekly":
+            delta = recurrence_intervals[recurrence_interval]
+            for i in range(25):  # Example: generate 10 occurrences
+                occurrence_start = start_time + i * delta
+                occurrence_end = end_time + i * delta
+                occurrences.append({
+                    "id": event.id,
+                    "title": event.title,
+                    "description": event.description,
+                    "start_time": occurrence_start,
+                    "end_time": occurrence_end,
+                    "type": event.type,
+                    "color": event.color,
+                    "recurrence": event.recurrence,
+                    "user_id": event.user_id
+                })
         elif recurrence_interval == "monthly":
             for i in range(10):  # Example: generate 10 monthly occurrences
                 month_delta = start_time.month + i
@@ -188,7 +203,7 @@ async def get_user_events(email: EmailStr):
     all_events = []
     for event in events:
         event["id"] = str(event.pop("_id"))
-        if event.get("recurrence"):
+        if event.get("recurrence") and event.get("recurrence").lower() != "none":
             print("event", event)
             occurrences = generate_occurrences(Event(**event))
             all_events.extend(occurrences)

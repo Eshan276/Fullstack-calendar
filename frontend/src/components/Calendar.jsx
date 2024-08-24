@@ -42,7 +42,18 @@ const modalStyles = {
     zIndex: "999",
   },
 };
-
+const plusButtonStyles = {
+  backgroundColor: "#007BFF",
+  borderRadius: "50%",
+  color: "#fff",
+  border: "none",
+  width: "30px",
+  height: "30px",
+  fontSize: "20px",
+  textAlign: "center",
+  lineHeight: "30px",
+  cursor: "pointer",
+};
 const inputStyles = {
   color: "#000",
   backgroundColor: "#f0f0f0",
@@ -64,21 +75,12 @@ const CalendarComponent = ({ userEmail }) => {
   const [modalIsOpen, setModalIsOpen] = useState(false);
   const [isCustomTypeModalOpen, setIsCustomTypeModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
+  const [selectedEvent, setSelectedEvent] = useState(null); // Track selected event for editing
   const [error, setError] = useState(null);
   const [customTypes, setCustomTypes] = useState([]); // Array to store custom types
   const [newType, setNewType] = useState("");
   const [newColor, setNewColor] = useState("#000000"); // Default color
   const [selectedTypes, setSelectedTypes] = useState(new Set()); // Set to track selected types
-
-  const localizer = dateFnsLocalizer({
-    format,
-    parse,
-    startOfWeek,
-    getDay,
-    locales: {
-      "en-US": enUS,
-    },
-  });
 
   useEffect(() => {
     fetchEvents();
@@ -133,246 +135,15 @@ const CalendarComponent = ({ userEmail }) => {
   };
 
   const handleSelect = (slotInfo) => {
-    console.log(slotInfo);
     setSelectedSlot(slotInfo);
+    setSelectedEvent(null); // Reset selected event when creating a new event
     setModalIsOpen(true);
   };
 
-  const handleModalClose = () => {
-    setModalIsOpen(false);
-    setSelectedSlot(null);
+  const handleEventClick = (event) => {
+    setSelectedEvent(event); // Set the selected event for editing
+    setModalIsOpen(true);
   };
-
-  const handleCustomTypeModalClose = () => {
-    setIsCustomTypeModalOpen(false);
-    setNewType("");
-    setNewColor("#000000");
-  };
-
-  const handleEventCreate = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-
-    const startTime = formData.get("start_time");
-    let endTime = formData.get("end_time");
-
-    const startDate = new Date(selectedSlot.start);
-    const year = startDate.getFullYear();
-    const month = String(startDate.getMonth() + 1).padStart(2, "0"); // Months are zero-based
-    const day = String(startDate.getDate()).padStart(2, "0");
-
-    // Format date as YYYY-MM-DD
-    const formattedDate = `${year}-${month}-${day}`;
-
-    let [hours, minutes] = startTime.split(":").map(Number);
-
-    // Combine date and time into the desired format
-    const newStartTime = `${formattedDate}T${String(hours).padStart(
-      2,
-      "0"
-    )}:${String(minutes).padStart(2, "0")}:00.000Z`;
-
-    console.log("here", newStartTime);
-    // startDate.setUTCHours(startTime.split(":")[0], startTime.split(":")[1]);
-    // startDate.setUTCHours(hours);
-    // startDate.setUTCMinutes(minutes);
-    // console.log("here", endTime);
-    let newEndTime;
-    let endDate;
-    if (!endTime) {
-      hours += 1;
-
-      // Check if adding one hour exceeds the end of the day
-      if (hours >= 24) {
-        // Set end time to the last minute of the day
-        newEndTime = `${formattedDate}T23:59:00.000Z`;
-      } else {
-        // Set end time to one hour after the start time
-        newEndTime = `${formattedDate}T${String(hours).padStart(
-          2,
-          "0"
-        )}:${String(minutes).padStart(2, "0")}:00.000Z`;
-      }
-
-      // console.log("here1", newEndTime);
-      // console.log("here1", endTime);
-      // endDate = new Date(startDate);
-      // endDate.setHours(startDate.getHours() + 1);
-      // console.log("here1", endTime, startDate, endDate);
-    } else {
-      const [hours, minutes] = endTime.split(":").map(Number);
-      newEndTime = `${formattedDate}T${String(hours).padStart(2, "0")}:${String(
-        minutes
-      ).padStart(2, "0")}:00.000Z`;
-      // console.log("here1", newEndTime);
-      // console.log("here2", endTime);
-      // endDate = new Date(startDate);
-      // endDate.setHours(endTime.split(":")[0], endTime.split(":")[1]);
-
-      const startDate1 = new Date(newStartTime);
-      const endDate1 = new Date(newEndTime);
-      // console.log("here", startDate1, endDate1);
-      if (endDate1 < startDate1) {
-        alert("End time cannot be earlier than start time.");
-        return;
-      }
-
-      if (endDate1.getDate() !== startDate1.getDate()) {
-        alert("End time must be within the same day as the start time.");
-        return;
-      }
-    }
-    let color = "#007BFF"; // Default color
-    const type = formData.get("type");
-    const recurrence = formData.get("recurrence"); // Get recurrence value
-
-    const customType = customTypes.find((custom) => custom.name === type);
-    if (customType) {
-      color = customType.color;
-    } else {
-      switch (type) {
-        case "task":
-          color = "#007BFF"; // Blue for Task
-          break;
-        case "meeting":
-          color = "#28a745"; // Green for Meeting
-          break;
-        case "reminder":
-          color = "#dc3545"; // Red for Reminder
-          break;
-        default:
-          break;
-      }
-    }
-
-    const newEvent = {
-      title: formData.get("title"),
-      description: formData.get("description"),
-      // start_time: startDate.toISOString(),
-      // end_time: endDate.toISOString(),
-      start_time: newStartTime,
-      end_time: newEndTime,
-      type,
-      color, // Include the color in the event data
-      recurrence, // Include recurrence rule
-    };
-    console.log(newEvent);
-
-    try {
-      await axios.post("http://localhost:8000/events/", newEvent, {
-        params: { email: userEmail },
-      });
-      setModalIsOpen(false);
-      fetchEvents();
-    } catch (error) {
-      console.error("Error creating event:", error);
-      setError("Failed to create event. Please try again.");
-    }
-  };
-  // const handleEventCreate = async (e) => {
-  //   e.preventDefault();
-  //   const formData = new FormData(e.target);
-
-  //   const startTime = formData.get("start_time");
-  //   let endTime = formData.get("end_time");
-
-  //   // Get the selected date (e.g., Thu Aug 29 2024)
-  //   const startDate = new Date(selectedSlot.start);
-  //   console.log("here", startTime, startDate);
-
-  //   // Extract hours and minutes from the start time
-  //   const [startHours, startMinutes] = startTime.split(":").map(Number);
-
-  //   // Set the UTC hours and minutes on the start date
-  //   startDate.setUTCHours(startHours);
-  //   startDate.setUTCMinutes(startMinutes);
-
-  //   let endDate;
-  //   if (!endTime) {
-  //     // If no end time is provided, set the end time to 1 hour after the start time
-  //     endDate = new Date(startDate);
-  //     endDate.setUTCHours(startDate.getUTCHours() + 1);
-  //     console.log("here1", endTime, startDate, endDate);
-  //   } else {
-  //     // If an end time is provided, create the end date with the provided time
-  //     const [endHours, endMinutes] = endTime.split(":").map(Number);
-  //     endDate = new Date(startDate);
-  //     endDate.setUTCHours(endHours);
-  //     endDate.setUTCMinutes(endMinutes);
-  //     console.log("here2", endTime, startDate, endDate);
-  //   }
-
-  //   // Validate the end date
-  //   if (endDate < startDate) {
-  //     alert("End time cannot be earlier than start time.");
-  //     return;
-  //   }
-
-  //   if (endDate.getUTCDate() !== startDate.getUTCDate()) {
-  //     alert("End time must be within the same day as the start time.");
-  //     return;
-  //   }
-
-  //   // Determine the color based on the event type
-  //   let color = "#007BFF"; // Default color (blue for Task)
-  //   const type = formData.get("type");
-  //   const recurrence = formData.get("recurrence"); // Get recurrence value
-
-  //   // Check if a custom type is selected
-  //   const customType = customTypes.find((custom) => custom.name === type);
-  //   if (customType) {
-  //     color = customType.color;
-  //   } else {
-  //     switch (type) {
-  //       case "task":
-  //         color = "#007BFF"; // Blue for Task
-  //         break;
-  //       case "meeting":
-  //         color = "#28a745"; // Green for Meeting
-  //         break;
-  //       case "reminder":
-  //         color = "#dc3545"; // Red for Reminder
-  //         break;
-  //       default:
-  //         break;
-  //     }
-  //   }
-
-  //   // Create the new event object
-  //   const newEvent = {
-  //     title: formData.get("title"),
-  //     description: formData.get("description"),
-  //     start_time: startDate.toISOString(),
-  //     end_time: endDate.toISOString(),
-  //     type,
-  //     color, // Include the color in the event data
-  //     recurrence, // Include recurrence rule
-  //   };
-  //   console.log(newEvent);
-
-  //   try {
-  //     // Send a POST request to create the event
-  //     await axios.post("http://localhost:8000/events/", newEvent, {
-  //       params: { email: userEmail },
-  //     });
-  //     setModalIsOpen(false); // Close the modal on success
-  //     fetchEvents(); // Refresh events
-  //   } catch (error) {
-  //     console.error("Error creating event:", error);
-  //     setError("Failed to create event. Please try again.");
-  //   }
-  // };
-
-  const handleEndTimeChange = (e) => {
-    const endTime = e.target.value;
-    const startTime = document.querySelector('input[name="start_time"]').value;
-
-    if (endTime < startTime) {
-      alert("End time cannot be earlier than start time.");
-      e.target.value = "";
-    }
-  };
-
   const handleEventDrop = async ({ event, start, end }) => {
     const updatedEvent = {
       ...event,
@@ -394,8 +165,148 @@ const CalendarComponent = ({ userEmail }) => {
       setError("Failed to update event. Please try again.");
     }
   };
+  const handleModalClose = () => {
+    setModalIsOpen(false);
+    setSelectedSlot(null);
+    setSelectedEvent(null); // Reset selected event on close
+  };
 
-  const handleTypeChange = (type) => {
+  const handleEventCreateOrEdit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+
+    const startTime = formData.get("start_time");
+    let endTime = formData.get("end_time");
+
+    const startDate = selectedEvent
+      ? new Date(selectedEvent.start)
+      : new Date(selectedSlot.start);
+    const year = startDate.getFullYear();
+    const month = String(startDate.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+    const day = String(startDate.getDate()).padStart(2, "0");
+
+    // Format date as YYYY-MM-DD
+    const formattedDate = `${year}-${month}-${day}`;
+
+    let [hours, minutes] = startTime.split(":").map(Number);
+
+    // Combine date and time into the desired format
+    const newStartTime = `${formattedDate}T${String(hours).padStart(
+      2,
+      "0"
+    )}:${String(minutes).padStart(2, "0")}:00.000Z`;
+
+    let newEndTime;
+    if (!endTime) {
+      hours += 1;
+      if (hours >= 24) {
+        newEndTime = `${formattedDate}T23:59:00.000Z`;
+      } else {
+        newEndTime = `${formattedDate}T${String(hours).padStart(
+          2,
+          "0"
+        )}:${String(minutes).padStart(2, "0")}:00.000Z`;
+      }
+    } else {
+      const [endHours, endMinutes] = endTime.split(":").map(Number);
+      newEndTime = `${formattedDate}T${String(endHours).padStart(
+        2,
+        "0"
+      )}:${String(endMinutes).padStart(2, "0")}:00.000Z`;
+
+      const startDateObj = new Date(newStartTime);
+      const endDateObj = new Date(newEndTime);
+      if (endDateObj < startDateObj) {
+        alert("End time cannot be earlier than start time.");
+        return;
+      }
+
+      if (endDateObj.getDate() !== startDateObj.getDate()) {
+        alert("End time must be within the same day as the start time.");
+        return;
+      }
+    }
+
+    let color = "#007BFF"; // Default color
+    const type = formData.get("type");
+    let recurrence = formData.get("recurrence"); // Get recurrence value
+    if (recurrence == "none") {
+      recurrence = "";
+    }
+    const customType = customTypes.find((custom) => custom.name === type);
+    if (customType) {
+      color = customType.color;
+    } else {
+      switch (type) {
+        case "task":
+          color = "#007BFF"; // Blue for Task
+          break;
+        case "meeting":
+          color = "#28a745"; // Green for Meeting
+          break;
+        case "reminder":
+          color = "#dc3545"; // Red for Reminder
+          break;
+        default:
+          break;
+      }
+    }
+
+    const eventData = {
+      title: formData.get("title"),
+      description: formData.get("description"),
+      start_time: newStartTime,
+      end_time: newEndTime,
+      type,
+      color,
+      recurrence,
+    };
+
+    try {
+      if (selectedEvent) {
+        // Update the event
+        await axios.put(
+          `http://localhost:8000/events/${selectedEvent.id}/`,
+          eventData,
+          { params: { email: userEmail } }
+        );
+      } else {
+        // Create a new event
+        await axios.post("http://localhost:8000/events/", eventData, {
+          params: { email: userEmail },
+        });
+      }
+      setModalIsOpen(false);
+      fetchEvents();
+    } catch (error) {
+      console.error("Error creating/updating event:", error);
+      setError(
+        "Failed to save the event. Please check your backend connection."
+      );
+    }
+  };
+
+  const handleDeleteEvent = async () => {
+    if (selectedEvent) {
+      try {
+        await axios.delete(
+          `http://localhost:8000/events/${selectedEvent.id}/`,
+          {
+            params: { email: userEmail },
+          }
+        );
+        setModalIsOpen(false);
+        fetchEvents();
+      } catch (error) {
+        console.error("Error deleting event:", error);
+        setError(
+          "Failed to delete the event. Please check your backend connection."
+        );
+      }
+    }
+  };
+
+  const handleTypesChange = (type) => {
     const updatedSelectedTypes = new Set(selectedTypes);
     if (updatedSelectedTypes.has(type)) {
       updatedSelectedTypes.delete(type);
@@ -404,7 +315,6 @@ const CalendarComponent = ({ userEmail }) => {
     }
     setSelectedTypes(updatedSelectedTypes);
   };
-
   const eventPropGetter = (event) => {
     const backgroundColor = event.color || "#007BFF"; // Default to blue if color is not set
     return {
@@ -414,162 +324,187 @@ const CalendarComponent = ({ userEmail }) => {
       },
     };
   };
-
   if (error) {
     return <div style={{ color: "#FF0000" }}>Error: {error}</div>;
   }
-
   return (
-    <div style={{ display: "flex", height: "500px" }}>
-      <div style={{ flex: 1 }}>
-        <DndProvider backend={HTML5Backend}>
-          <DnDCalendar
-            localizer={localizer}
-            events={filteredEvents}
-            startAccessor="start"
-            endAccessor="end"
-            selectable
-            onSelectSlot={handleSelect}
-            onEventDrop={handleEventDrop}
-            resizable
-            view={view}
-            onView={setView}
-            eventPropGetter={eventPropGetter} // Add this line to customize event colors
-            style={{ color: "#000", backgroundColor: "#f5f5f5" }}
+    <div style={{ height: "100vh" }}>
+      <h1 style={{ textAlign: "center" }}>My Calendar</h1>
+
+      {error && <p style={{ color: "red" }}>{error}</p>}
+
+      {/* Type filters */}
+      <div style={{ marginBottom: "10px" }}>
+        <strong>Filter by Type: </strong>
+        <label>
+          <input
+            type="checkbox"
+            checked={selectedTypes.has("task")}
+            onChange={() => handleTypesChange("task")}
           />
-        </DndProvider>
-      </div>
-      <div
-        style={{
-          width: "250px",
-          padding: "20px",
-          borderLeft: "1px solid #ccc",
-        }}
-      >
-        <h3 style={{ color: "#333" }}>Event Types</h3>
-        <div>
-          <label>
+          Task
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={selectedTypes.has("meeting")}
+            onChange={() => handleTypesChange("meeting")}
+          />
+          Meeting
+        </label>
+        <label>
+          <input
+            type="checkbox"
+            checked={selectedTypes.has("reminder")}
+            onChange={() => handleTypesChange("reminder")}
+          />
+          Reminder
+        </label>
+        {/* Render checkboxes for custom types */}
+        {customTypes.map((customType) => (
+          <label key={customType.name}>
             <input
               type="checkbox"
-              checked={selectedTypes.has("task")}
-              onChange={() => handleTypeChange("task")}
+              checked={selectedTypes.has(customType.name)}
+              onChange={() => handleTypesChange(customType.name)}
             />
-            Task
+            {customType.name}
           </label>
-        </div>
-        <div>
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedTypes.has("meeting")}
-              onChange={() => handleTypeChange("meeting")}
-            />
-            Meeting
-          </label>
-        </div>
-        <div>
-          <label>
-            <input
-              type="checkbox"
-              checked={selectedTypes.has("reminder")}
-              onChange={() => handleTypeChange("reminder")}
-            />
-            Reminder
-          </label>
-        </div>
-        <h3 style={{ color: "#333" }}>Custom Types</h3>
-        {customTypes.map((customType, index) => (
-          <div key={index}>
-            <label>
-              <input
-                type="checkbox"
-                checked={selectedTypes.has(customType.name)}
-                onChange={() => handleTypeChange(customType.name)}
-              />
-              {customType.name}
-              <span
-                style={{
-                  display: "inline-block",
-                  width: "20px",
-                  height: "20px",
-                  backgroundColor: customType.color,
-                  marginLeft: "10px",
-                }}
-              ></span>
-            </label>
-          </div>
         ))}
       </div>
+
+      <DndProvider backend={HTML5Backend}>
+        <DnDCalendar
+          localizer={localizer}
+          events={filteredEvents}
+          startAccessor="start"
+          endAccessor="end"
+          style={{
+            height: "80vh",
+            margin: "20px",
+            color: "#000",
+            backgroundColor: "#f5f5f5",
+          }}
+          selectable
+          onSelectSlot={handleSelect}
+          onSelectEvent={handleEventClick}
+          onEventDrop={handleEventDrop}
+          resizable
+          defaultView={view}
+          onView={(newView) => setView(newView)}
+          eventPropGetter={eventPropGetter}
+        />
+      </DndProvider>
+
+      {/* Create/Edit Event Modal */}
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleModalClose}
         style={modalStyles}
       >
-        <h2 style={{ color: "#333" }}>Create Event</h2>
-        <form onSubmit={handleEventCreate}>
-          <div>
-            <label style={{ color: "#007BFF" }}>Title: </label>
-            <input type="text" name="title" required style={inputStyles} />
-          </div>
-          <div>
-            <label style={{ color: "#007BFF" }}>Description: </label>
-            <textarea name="description" style={inputStyles} />
-          </div>
-          <div>
-            <label style={{ color: "#007BFF" }}>Type: </label>
-            <select name="type" required style={inputStyles}>
+        <h2>{selectedEvent ? "Edit Event" : "Create New Event"}</h2>
+        <form onSubmit={handleEventCreateOrEdit}>
+          <label>
+            Title:
+            <input
+              name="title"
+              defaultValue={selectedEvent?.title || ""}
+              style={inputStyles}
+              required
+            />
+          </label>
+          <label>
+            Description:
+            <input
+              name="description"
+              defaultValue={selectedEvent?.description || ""}
+              style={inputStyles}
+            />
+          </label>
+          <label>
+            Type:
+            <select
+              name="type"
+              defaultValue={selectedEvent?.type || "task"}
+              style={inputStyles}
+            >
               <option value="task">Task</option>
               <option value="meeting">Meeting</option>
               <option value="reminder">Reminder</option>
-              {customTypes.map((customType, index) => (
-                <option key={index} value={customType.name}>
+              {/* Render options for custom types */}
+              {customTypes.map((customType) => (
+                <option key={customType.name} value={customType.name}>
                   {customType.name}
                 </option>
               ))}
             </select>
-          </div>
-          <div>
-            <label style={{ color: "#007BFF" }}>Start Time: </label>
-            <input type="time" name="start_time" required style={inputStyles} />
-          </div>
-          <div>
-            <label style={{ color: "#007BFF" }}>End Time: </label>
+            <button
+              type="button"
+              onClick={() => setIsCustomTypeModalOpen(true)}
+              style={plusButtonStyles}
+            >
+              +
+            </button>
+          </label>
+          <label>
+            Start Time:
             <input
+              name="start_time"
               type="time"
+              defaultValue={
+                selectedEvent
+                  ? format(new Date(selectedEvent.start), "HH:mm")
+                  : ""
+              }
+              style={inputStyles}
+              required
+            />
+          </label>
+          <label>
+            End Time:
+            <input
               name="end_time"
-              onChange={handleEndTimeChange}
+              type="time"
+              defaultValue={
+                selectedEvent
+                  ? format(new Date(selectedEvent.end), "HH:mm")
+                  : ""
+              }
               style={inputStyles}
             />
-          </div>
-          <div>
-            <label style={{ color: "#007BFF" }}>Recurrence: </label>
-            <select name="recurrence" style={inputStyles}>
-              <option value="">None</option>
+          </label>
+          <label>
+            Recurrence:
+            <select
+              name="recurrence"
+              defaultValue={selectedEvent?.recurrence || "none"}
+              style={inputStyles}
+            >
+              <option value="none">None</option>
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
               {/* Add more recurrence options if needed */}
             </select>
-          </div>
+          </label>
           <button type="submit" style={buttonStyles("#007BFF")}>
-            Create Event
-          </button>
-          <button
-            type="button"
-            onClick={handleModalClose}
-            style={buttonStyles("#FF0000")}
-          >
-            Cancel
+            {selectedEvent ? "Update Event" : "Create Event"}
           </button>
         </form>
+        {selectedEvent && (
+          <button onClick={handleDeleteEvent} style={buttonStyles("#dc3545")}>
+            Delete Event
+          </button>
+        )}
       </Modal>
 
+      {/* Custom Type Modal */}
       <Modal
         isOpen={isCustomTypeModalOpen}
-        onRequestClose={handleCustomTypeModalClose}
+        onRequestClose={() => setIsCustomTypeModalOpen(false)}
         style={modalStyles}
       >
-        <h2 style={{ color: "#333" }}>Add Custom Type</h2>
+        <h2>Create Custom Type</h2>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -577,40 +512,29 @@ const CalendarComponent = ({ userEmail }) => {
               ...customTypes,
               { name: newType, color: newColor },
             ]);
-            setNewType("");
-            setNewColor("#000000"); // Reset color
-            handleCustomTypeModalClose();
+            setIsCustomTypeModalOpen(false);
           }}
         >
-          <div>
-            <label style={{ color: "#007BFF" }}>Type Name: </label>
+          <label>
+            Type Name:
             <input
-              type="text"
               value={newType}
               onChange={(e) => setNewType(e.target.value)}
               required
               style={inputStyles}
             />
-          </div>
-          <div>
-            <label style={{ color: "#007BFF" }}>Color: </label>
+          </label>
+          <label>
+            Color:
             <input
               type="color"
               value={newColor}
               onChange={(e) => setNewColor(e.target.value)}
-              required
               style={inputStyles}
             />
-          </div>
+          </label>
           <button type="submit" style={buttonStyles("#007BFF")}>
-            Add Custom Type
-          </button>
-          <button
-            type="button"
-            onClick={handleCustomTypeModalClose}
-            style={buttonStyles("#FF0000")}
-          >
-            Cancel
+            Create
           </button>
         </form>
       </Modal>
