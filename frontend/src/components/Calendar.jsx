@@ -45,55 +45,6 @@ const modalStyles = {
     zIndex: "999",
   },
 };
-const plusButtonStyles = {
-  backgroundColor: "#007BFF",
-  borderRadius: "50%",
-  color: "#fff",
-  border: "none",
-  width: "30px",
-  height: "30px",
-  fontSize: "20px",
-  textAlign: "center",
-  lineHeight: "30px",
-  cursor: "pointer",
-};
-const formStyles = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "15px",
-};
-
-const labelStyles = {
-  display: "flex",
-  flexDirection: "column",
-  gap: "5px",
-  fontSize: "14px",
-  fontWeight: "bold",
-};
-
-const inputStyles = {
-  color: "#333",
-  backgroundColor: "#f5f5f5",
-  border: "1px solid #ccc",
-  borderRadius: "5px",
-  padding: "8px 12px",
-  fontSize: "14px",
-};
-
-const buttonStyles = (bgColor) => ({
-  color: "#fff",
-  backgroundColor: bgColor,
-  padding: "10px 15px",
-  border: "none",
-  borderRadius: "5px",
-  marginTop: "15px",
-  fontSize: "16px",
-  cursor: "pointer",
-  transition: "background-color 0.3s",
-  "&:hover": {
-    backgroundColor: darken(0.1, bgColor),
-  },
-});
 
 const CalendarComponent = ({ userEmail }) => {
   const [events, setEvents] = useState([]);
@@ -355,25 +306,20 @@ const CalendarComponent = ({ userEmail }) => {
     return <div style={{ color: "#FF0000" }}>Error: {error}</div>;
   }
   return (
-    <div style={{ height: "100vh" }}>
-      <h1 style={{ textAlign: "center" }}>My Calendar</h1>
+    <div className="h-screen">
+      <h1 className="text-center text-2xl font-bold mb-4">My Calendar</h1>
 
-      {error && <p style={{ color: "red" }}>{error}</p>}
+      {error && <p className="text-red-500">{error}</p>}
 
-      <div style={{ display: "flex" }}>
-        <div style={{ flex: 1, marginRight: "20px" }}>
+      <div className="flex">
+        <div className="flex-1 mr-5">
           <DndProvider backend={HTML5Backend}>
             <DnDCalendar
               localizer={localizer}
               events={filteredEvents}
               startAccessor="start"
               endAccessor="end"
-              style={{
-                height: "80vh",
-                margin: "20px",
-                color: "#000",
-                backgroundColor: "#f5f5f5",
-              }}
+              className="h-[80vh] m-5 text-black bg-gray-100"
               selectable
               onSelectSlot={handleSelect}
               onSelectEvent={handleEventClick}
@@ -386,83 +332,23 @@ const CalendarComponent = ({ userEmail }) => {
           </DndProvider>
         </div>
 
-        <div
-          style={{
-            width: "250px",
-            marginLeft: "20px",
-            backgroundColor: "white",
-            padding: "10px",
-            borderRadius: "5px",
-            boxShadow: "0 0 10px rgba(0, 0, 0, 0.1)",
-            color: "black",
-          }}
-        >
+        <div className="w-64 ml-5 bg-white p-4 rounded-md shadow-md text-black">
           <strong>Filter by Type: </strong>
-          <div
-            style={{ display: "flex", flexDirection: "column", gap: "10px" }}
-          >
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                color: "black",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={selectedTypes.has("task")}
-                onChange={() => handleTypesChange("task")}
-              />
-              Task
-            </label>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                color: "black",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={selectedTypes.has("meeting")}
-                onChange={() => handleTypesChange("meeting")}
-              />
-              Meeting
-            </label>
-            <label
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: "5px",
-                color: "black",
-              }}
-            >
-              <input
-                type="checkbox"
-                checked={selectedTypes.has("reminder")}
-                onChange={() => handleTypesChange("reminder")}
-              />
-              Reminder
-            </label>
-            {/* Render checkboxes for custom types */}
-            {customTypes.map((customType) => (
-              <label
-                key={customType.name}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "5px",
-                  color: "black",
-                }}
-              >
+          <div className="flex flex-col gap-2 mt-2">
+            {[
+              "task",
+              "meeting",
+              "reminder",
+              ...customTypes.map((t) => t.name),
+            ].map((type) => (
+              <label key={type} className="flex items-center gap-2 text-black">
                 <input
                   type="checkbox"
-                  checked={selectedTypes.has(customType.name)}
-                  onChange={() => handleTypesChange(customType.name)}
+                  checked={selectedTypes.has(type)}
+                  onChange={() => handleTypesChange(type)}
+                  className="form-checkbox"
                 />
-                {customType.name}
+                {type.charAt(0).toUpperCase() + type.slice(1)}
               </label>
             ))}
           </div>
@@ -470,57 +356,70 @@ const CalendarComponent = ({ userEmail }) => {
       </div>
 
       {/* Create/Edit Event Modal */}
+      {/* Create/Edit Event Modal */}
       <Modal
         isOpen={modalIsOpen}
         onRequestClose={handleModalClose}
         style={modalStyles}
+        className="bg-white p-8 rounded-lg max-w-md mx-auto mt-20"
       >
-        <h2>{selectedEvent ? "Edit Event" : "Create New Event"}</h2>
-        <form onSubmit={handleEventCreateOrEdit} style={formStyles}>
-          <label>
-            Title:
+        <h2 className="text-2xl font-bold mb-4">
+          {selectedEvent ? "Edit Event" : "Create New Event"}
+        </h2>
+        <form onSubmit={handleEventCreateOrEdit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Title:
+            </label>
             <input
               name="title"
               defaultValue={selectedEvent?.title || ""}
-              style={inputStyles}
+              className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               required
             />
-          </label>
-          <label>
-            Description:
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Description:
+            </label>
             <input
               name="description"
               defaultValue={selectedEvent?.description || ""}
-              style={inputStyles}
+              className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
-          </label>
-          <label>
-            Type:
-            <select
-              name="type"
-              defaultValue={selectedEvent?.type || "task"}
-              style={inputStyles}
-            >
-              <option value="task">Task</option>
-              <option value="meeting">Meeting</option>
-              <option value="reminder">Reminder</option>
-              {/* Render options for custom types */}
-              {customTypes.map((customType) => (
-                <option key={customType.name} value={customType.name}>
-                  {customType.name}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              onClick={() => setIsCustomTypeModalOpen(true)}
-              style={plusButtonStyles}
-            >
-              +
-            </button>
-          </label>
-          <label style={labelStyles}>
-            Start Time:
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Type:
+            </label>
+            <div className="flex items-center">
+              <select
+                name="type"
+                defaultValue={selectedEvent?.type || "task"}
+                className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+              >
+                <option value="task">Task</option>
+                <option value="meeting">Meeting</option>
+                <option value="reminder">Reminder</option>
+                {customTypes.map((customType) => (
+                  <option key={customType.name} value={customType.name}>
+                    {customType.name}
+                  </option>
+                ))}
+              </select>
+              <button
+                type="button"
+                onClick={() => setIsCustomTypeModalOpen(true)}
+                className="ml-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center focus:outline-none hover:bg-blue-600"
+              >
+                +
+              </button>
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Start Time:
+            </label>
             <input
               name="start_time"
               type="time"
@@ -529,12 +428,14 @@ const CalendarComponent = ({ userEmail }) => {
                   ? format(new Date(selectedEvent.start), "HH:mm")
                   : ""
               }
-              style={inputStyles}
+              className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               required
             />
-          </label>
-          <label style={labelStyles}>
-            End Time:
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              End Time:
+            </label>
             <input
               name="end_time"
               type="time"
@@ -543,29 +444,36 @@ const CalendarComponent = ({ userEmail }) => {
                   ? format(new Date(selectedEvent.end), "HH:mm")
                   : ""
               }
-              style={inputStyles}
+              className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
-          </label>
-          <label style={labelStyles}>
-            Recurrence:
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Recurrence:
+            </label>
             <select
               name="recurrence"
               defaultValue={selectedEvent?.recurrence || "none"}
-              style={inputStyles}
+              className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             >
               <option value="none">None</option>
               <option value="daily">Daily</option>
               <option value="weekly">Weekly</option>
               <option value="monthly">Monthly</option>
-              {/* Add more recurrence options if needed */}
             </select>
-          </label>
-          <button type="submit" style={buttonStyles("#007BFF")}>
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
             {selectedEvent ? "Update Event" : "Create Event"}
           </button>
         </form>
         {selectedEvent && (
-          <button onClick={handleDeleteEvent} style={buttonStyles("#dc3545")}>
+          <button
+            onClick={handleDeleteEvent}
+            className="mt-4 w-full bg-red-500 text-white py-2 px-4 rounded-md hover:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50"
+          >
             Delete Event
           </button>
         )}
@@ -576,8 +484,9 @@ const CalendarComponent = ({ userEmail }) => {
         isOpen={isCustomTypeModalOpen}
         onRequestClose={() => setIsCustomTypeModalOpen(false)}
         style={modalStyles}
+        className="bg-white p-8 rounded-lg max-w-md mx-auto mt-20"
       >
-        <h2>Create Custom Type</h2>
+        <h2 className="text-2xl font-bold mb-4">Create Custom Type</h2>
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -587,26 +496,34 @@ const CalendarComponent = ({ userEmail }) => {
             ]);
             setIsCustomTypeModalOpen(false);
           }}
+          className="space-y-4"
         >
-          <label style={labelStyles}>
-            Type Name:
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Type Name:
+            </label>
             <input
               value={newType}
               onChange={(e) => setNewType(e.target.value)}
               required
-              style={inputStyles}
+              className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
-          </label>
-          <label style={labelStyles}>
-            Color:
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">
+              Color:
+            </label>
             <input
               type="color"
               value={newColor}
               onChange={(e) => setNewColor(e.target.value)}
-              style={inputStyles}
+              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
             />
-          </label>
-          <button type="submit" style={buttonStyles("#007BFF")}>
+          </div>
+          <button
+            type="submit"
+            className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+          >
             Create
           </button>
         </form>
@@ -624,16 +541,23 @@ const LoginComponent = ({ onLogin }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label style={labelStyles}>Email: </label>
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        required
-        style={inputStyles}
-      />
-      <button type="submit" style={buttonStyles("#007BFF")}>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-sm font-medium text-blue-400">
+          Email:
+        </label>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+        />
+      </div>
+      <button
+        type="submit"
+        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+      >
         Login
       </button>
     </form>
@@ -648,13 +572,12 @@ const App = () => {
   };
 
   return (
-    <div>
-      <h1>Event Calendar App</h1>
+    <div className="container mx-auto px-4 py-8">
       {!userEmail ? (
         <LoginComponent onLogin={handleLogin} />
       ) : (
         <>
-          <p>Logged in as: {userEmail}</p>
+          <p className="mb-4">Logged in as: {userEmail}</p>
           <CalendarComponent userEmail={userEmail} />
         </>
       )}
