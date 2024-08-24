@@ -133,6 +133,7 @@ const CalendarComponent = ({ userEmail }) => {
   };
 
   const handleSelect = (slotInfo) => {
+    console.log(slotInfo);
     setSelectedSlot(slotInfo);
     setModalIsOpen(true);
   };
@@ -156,29 +157,74 @@ const CalendarComponent = ({ userEmail }) => {
     let endTime = formData.get("end_time");
 
     const startDate = new Date(selectedSlot.start);
-    startDate.setHours(startTime.split(":")[0], startTime.split(":")[1]);
+    const year = startDate.getFullYear();
+    const month = String(startDate.getMonth() + 1).padStart(2, "0"); // Months are zero-based
+    const day = String(startDate.getDate()).padStart(2, "0");
 
+    // Format date as YYYY-MM-DD
+    const formattedDate = `${year}-${month}-${day}`;
+
+    let [hours, minutes] = startTime.split(":").map(Number);
+
+    // Combine date and time into the desired format
+    const newStartTime = `${formattedDate}T${String(hours).padStart(
+      2,
+      "0"
+    )}:${String(minutes).padStart(2, "0")}:00.000Z`;
+
+    console.log("here", newStartTime);
+    // startDate.setUTCHours(startTime.split(":")[0], startTime.split(":")[1]);
+    // startDate.setUTCHours(hours);
+    // startDate.setUTCMinutes(minutes);
+    // console.log("here", endTime);
+    let newEndTime;
     let endDate;
     if (!endTime) {
-      endDate = new Date(startDate);
-      endDate.setHours(startDate.getHours() + 1);
+      hours += 1;
+
+      // Check if adding one hour exceeds the end of the day
+      if (hours >= 24) {
+        // Set end time to the last minute of the day
+        newEndTime = `${formattedDate}T23:59:00.000Z`;
+      } else {
+        // Set end time to one hour after the start time
+        newEndTime = `${formattedDate}T${String(hours).padStart(
+          2,
+          "0"
+        )}:${String(minutes).padStart(2, "0")}:00.000Z`;
+      }
+
+      // console.log("here1", newEndTime);
+      // console.log("here1", endTime);
+      // endDate = new Date(startDate);
+      // endDate.setHours(startDate.getHours() + 1);
+      // console.log("here1", endTime, startDate, endDate);
     } else {
-      endDate = new Date(startDate);
-      endDate.setHours(endTime.split(":")[0], endTime.split(":")[1]);
-    }
+      const [hours, minutes] = endTime.split(":").map(Number);
+      newEndTime = `${formattedDate}T${String(hours).padStart(2, "0")}:${String(
+        minutes
+      ).padStart(2, "0")}:00.000Z`;
+      // console.log("here1", newEndTime);
+      // console.log("here2", endTime);
+      // endDate = new Date(startDate);
+      // endDate.setHours(endTime.split(":")[0], endTime.split(":")[1]);
 
-    if (endDate < startDate) {
-      alert("End time cannot be earlier than start time.");
-      return;
-    }
+      const startDate1 = new Date(newStartTime);
+      const endDate1 = new Date(newEndTime);
+      // console.log("here", startDate1, endDate1);
+      if (endDate1 < startDate1) {
+        alert("End time cannot be earlier than start time.");
+        return;
+      }
 
-    if (endDate.getDate() !== startDate.getDate()) {
-      alert("End time must be within the same day as the start time.");
-      return;
+      if (endDate1.getDate() !== startDate1.getDate()) {
+        alert("End time must be within the same day as the start time.");
+        return;
+      }
     }
-
     let color = "#007BFF"; // Default color
     const type = formData.get("type");
+    const recurrence = formData.get("recurrence"); // Get recurrence value
 
     const customType = customTypes.find((custom) => custom.name === type);
     if (customType) {
@@ -202,11 +248,15 @@ const CalendarComponent = ({ userEmail }) => {
     const newEvent = {
       title: formData.get("title"),
       description: formData.get("description"),
-      start_time: startDate.toISOString(),
-      end_time: endDate.toISOString(),
+      // start_time: startDate.toISOString(),
+      // end_time: endDate.toISOString(),
+      start_time: newStartTime,
+      end_time: newEndTime,
       type,
       color, // Include the color in the event data
+      recurrence, // Include recurrence rule
     };
+    console.log(newEvent);
 
     try {
       await axios.post("http://localhost:8000/events/", newEvent, {
@@ -219,6 +269,99 @@ const CalendarComponent = ({ userEmail }) => {
       setError("Failed to create event. Please try again.");
     }
   };
+  // const handleEventCreate = async (e) => {
+  //   e.preventDefault();
+  //   const formData = new FormData(e.target);
+
+  //   const startTime = formData.get("start_time");
+  //   let endTime = formData.get("end_time");
+
+  //   // Get the selected date (e.g., Thu Aug 29 2024)
+  //   const startDate = new Date(selectedSlot.start);
+  //   console.log("here", startTime, startDate);
+
+  //   // Extract hours and minutes from the start time
+  //   const [startHours, startMinutes] = startTime.split(":").map(Number);
+
+  //   // Set the UTC hours and minutes on the start date
+  //   startDate.setUTCHours(startHours);
+  //   startDate.setUTCMinutes(startMinutes);
+
+  //   let endDate;
+  //   if (!endTime) {
+  //     // If no end time is provided, set the end time to 1 hour after the start time
+  //     endDate = new Date(startDate);
+  //     endDate.setUTCHours(startDate.getUTCHours() + 1);
+  //     console.log("here1", endTime, startDate, endDate);
+  //   } else {
+  //     // If an end time is provided, create the end date with the provided time
+  //     const [endHours, endMinutes] = endTime.split(":").map(Number);
+  //     endDate = new Date(startDate);
+  //     endDate.setUTCHours(endHours);
+  //     endDate.setUTCMinutes(endMinutes);
+  //     console.log("here2", endTime, startDate, endDate);
+  //   }
+
+  //   // Validate the end date
+  //   if (endDate < startDate) {
+  //     alert("End time cannot be earlier than start time.");
+  //     return;
+  //   }
+
+  //   if (endDate.getUTCDate() !== startDate.getUTCDate()) {
+  //     alert("End time must be within the same day as the start time.");
+  //     return;
+  //   }
+
+  //   // Determine the color based on the event type
+  //   let color = "#007BFF"; // Default color (blue for Task)
+  //   const type = formData.get("type");
+  //   const recurrence = formData.get("recurrence"); // Get recurrence value
+
+  //   // Check if a custom type is selected
+  //   const customType = customTypes.find((custom) => custom.name === type);
+  //   if (customType) {
+  //     color = customType.color;
+  //   } else {
+  //     switch (type) {
+  //       case "task":
+  //         color = "#007BFF"; // Blue for Task
+  //         break;
+  //       case "meeting":
+  //         color = "#28a745"; // Green for Meeting
+  //         break;
+  //       case "reminder":
+  //         color = "#dc3545"; // Red for Reminder
+  //         break;
+  //       default:
+  //         break;
+  //     }
+  //   }
+
+  //   // Create the new event object
+  //   const newEvent = {
+  //     title: formData.get("title"),
+  //     description: formData.get("description"),
+  //     start_time: startDate.toISOString(),
+  //     end_time: endDate.toISOString(),
+  //     type,
+  //     color, // Include the color in the event data
+  //     recurrence, // Include recurrence rule
+  //   };
+  //   console.log(newEvent);
+
+  //   try {
+  //     // Send a POST request to create the event
+  //     await axios.post("http://localhost:8000/events/", newEvent, {
+  //       params: { email: userEmail },
+  //     });
+  //     setModalIsOpen(false); // Close the modal on success
+  //     fetchEvents(); // Refresh events
+  //   } catch (error) {
+  //     console.error("Error creating event:", error);
+  //     setError("Failed to create event. Please try again.");
+  //   }
+  // };
 
   const handleEndTimeChange = (e) => {
     const endTime = e.target.value;
@@ -397,6 +540,16 @@ const CalendarComponent = ({ userEmail }) => {
               onChange={handleEndTimeChange}
               style={inputStyles}
             />
+          </div>
+          <div>
+            <label style={{ color: "#007BFF" }}>Recurrence: </label>
+            <select name="recurrence" style={inputStyles}>
+              <option value="">None</option>
+              <option value="daily">Daily</option>
+              <option value="weekly">Weekly</option>
+              <option value="monthly">Monthly</option>
+              {/* Add more recurrence options if needed */}
+            </select>
           </div>
           <button type="submit" style={buttonStyles("#007BFF")}>
             Create Event
