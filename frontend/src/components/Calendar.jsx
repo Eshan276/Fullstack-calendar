@@ -13,6 +13,7 @@ import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { darken } from "polished";
+import moment from "moment";
 // Date-fns localization
 const locales = {
   "en-US": enUS,
@@ -59,6 +60,7 @@ const CalendarComponent = ({ userEmail }) => {
   const [newType, setNewType] = useState("");
   const [newColor, setNewColor] = useState("#000000"); // Default color
   const [selectedTypes, setSelectedTypes] = useState(new Set()); // Set to track selected types
+  const [currentDate, setCurrentDate] = React.useState(new Date());
 
   useEffect(() => {
     fetchEvents();
@@ -305,6 +307,26 @@ const CalendarComponent = ({ userEmail }) => {
       },
     };
   };
+  const dayPropGetter = (date, currentMonth) => {
+    const today = new Date();
+    const dateMonth = moment(date).month();
+
+    if (date.toDateString() === today.toDateString()) {
+      return {
+        style: {
+          backgroundColor: "#64b5f6", // Blue 300 color for current date
+        },
+      };
+    } else if (dateMonth !== currentMonth) {
+      return {
+        style: {
+          backgroundColor: "#507A76", // Light gray color for previous/next month's dates
+          color: "#212121", // Light gray text color
+        },
+      };
+    }
+    return {};
+  };
   if (error) {
     return <div style={{ color: "#FF0000" }}>Error: {error}</div>;
   }
@@ -317,22 +339,30 @@ const CalendarComponent = ({ userEmail }) => {
       <div className="flex-row sm:flex">
         <div className="flex-1 mr-5 rounded-md">
           <DndProvider backend={HTML5Backend}>
-            <DnDCalendar
-              localizer={localizer}
-              events={filteredEvents}
-              startAccessor="start"
-              endAccessor="end"
-              className="h-[80vh] m-5 text-black bg-gray-100 rounded-md "
-              selectable
-              onSelectSlot={handleSelect}
-              onSelectEvent={handleEventClick}
-              onEventDrop={handleEventDrop}
-              resizable
-              defaultView={view}
-              onView={(newView) => setView(newView)}
-              eventPropGetter={eventPropGetter}
-              messages={messages}
-            />
+            <div className="bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg border border-white border-opacity-30 shadow-lg rounded-xl p-4">
+              <DnDCalendar
+                localizer={localizer}
+                events={filteredEvents}
+                startAccessor="start"
+                endAccessor="end"
+                className="h-[80vh] m-5 text-black font-bold bg-transparent rounded-md" // Updated styles
+                selectable
+                onSelectSlot={handleSelect}
+                onSelectEvent={handleEventClick}
+                onEventDrop={handleEventDrop}
+                resizable
+                defaultView={view}
+                onView={(newView) => setView(newView)}
+                eventPropGetter={eventPropGetter}
+                messages={messages}
+                step={60}
+                timeslots={1}
+                onNavigate={(date) => setCurrentDate(date)}
+                dayPropGetter={(date) =>
+                  dayPropGetter(date, moment(currentDate).month())
+                }
+              />
+            </div>
           </DndProvider>
         </div>
 

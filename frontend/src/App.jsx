@@ -6,7 +6,7 @@ function App() {
     <div
       className=" bg-cover bg-center min-h-screen w-screen relative overflow-hidden"
       style={{
-        backgroundImage: "url('/img2.jpg')",
+        backgroundImage: "url('/wp.jpg')",
         overflow: "hidden",
       }}
     >
