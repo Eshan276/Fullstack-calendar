@@ -306,20 +306,20 @@ const CalendarComponent = ({ userEmail }) => {
     return <div style={{ color: "#FF0000" }}>Error: {error}</div>;
   }
   return (
-    <div className="h-screen">
-      <h1 className="text-center text-2xl font-bold mb-4">My Calendar</h1>
+    <div className="h-screen w-full">
+      {/* <h1 className="text-center text-2xl font-bold mb-4">My Calendar</h1> */}
 
       {error && <p className="text-red-500">{error}</p>}
 
-      <div className="flex">
-        <div className="flex-1 mr-5">
+      <div className="flex-row sm:flex">
+        <div className="flex-1 mr-5 rounded-md">
           <DndProvider backend={HTML5Backend}>
             <DnDCalendar
               localizer={localizer}
               events={filteredEvents}
               startAccessor="start"
               endAccessor="end"
-              className="h-[80vh] m-5 text-black bg-gray-100"
+              className="h-[80vh] m-5 text-black bg-gray-100 rounded-md "
               selectable
               onSelectSlot={handleSelect}
               onSelectEvent={handleEventClick}
@@ -332,7 +332,7 @@ const CalendarComponent = ({ userEmail }) => {
           </DndProvider>
         </div>
 
-        <div className="w-64 ml-5 bg-white p-4 rounded-md shadow-md text-black">
+        <div className="h-1/2 mt-5 w-64 mx-5 border-2 border-white bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg shadow-lg p-6 rounded-lg text-gray-300">
           <strong>Filter by Type: </strong>
           <div className="flex flex-col gap-2 mt-2">
             {[
@@ -341,7 +341,10 @@ const CalendarComponent = ({ userEmail }) => {
               "reminder",
               ...customTypes.map((t) => t.name),
             ].map((type) => (
-              <label key={type} className="flex items-center gap-2 text-black">
+              <label
+                key={type}
+                className="flex items-center gap-2 text-gray-300"
+              >
                 <input
                   type="checkbox"
                   checked={selectedTypes.has(type)}
@@ -396,7 +399,7 @@ const CalendarComponent = ({ userEmail }) => {
               <select
                 name="type"
                 defaultValue={selectedEvent?.type || "task"}
-                className="mt-1 block w-full rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="mt-1 block w-3/4 rounded-md bg-slate-300 border-2 border-blue-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
               >
                 <option value="task">Task</option>
                 <option value="meeting">Meeting</option>
@@ -412,7 +415,7 @@ const CalendarComponent = ({ userEmail }) => {
                 onClick={() => setIsCustomTypeModalOpen(true)}
                 className="ml-2 bg-blue-500 text-white rounded-full w-6 h-6 flex items-center justify-center focus:outline-none hover:bg-blue-600"
               >
-                +
+                <p className="flex items-center justify-center mb-1">+</p>
               </button>
             </div>
           </div>
@@ -541,26 +544,28 @@ const LoginComponent = ({ onLogin }) => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium text-blue-400">
-          Email:
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-        />
-      </div>
-      <button
-        type="submit"
-        className="w-full bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
-      >
-        Login
-      </button>
-    </form>
+    <div className="flex flex-col items-center justify-center border-2 border-white bg-white bg-opacity-10 backdrop-filter backdrop-blur-lg shadow-lg p-6 rounded-lg">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-blue-400">
+            Email:
+          </label>
+          <input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="flex mt-1 items-center justify-center  rounded-md border-2 border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+          />
+        </div>
+        <button
+          type="submit"
+          className="flex items-center justify-center  bg-blue-500 text-white py-2 px-4 rounded-md hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+        >
+          Login
+        </button>
+      </form>
+    </div>
   );
 };
 
@@ -572,12 +577,12 @@ const App = () => {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="flex flex-col items-center justify-center container mx-auto px-4 py-8 overflow-hidden">
       {!userEmail ? (
         <LoginComponent onLogin={handleLogin} />
       ) : (
         <>
-          <p className="mb-4">Logged in as: {userEmail}</p>
+          <p className="flex-row mb-4">Logged in as: {userEmail}</p>
           <CalendarComponent userEmail={userEmail} />
         </>
       )}

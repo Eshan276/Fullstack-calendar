@@ -4,14 +4,17 @@ import CalendarComponent from "./components/Calendar";
 function App() {
   return (
     <div
-      className="App bg-cover bg-center h-screen w-screen relative"
+      className=" bg-cover bg-center min-h-screen w-screen relative overflow-hidden"
       style={{
-        backgroundImage: "url('/img.jpg')",
+        backgroundImage: "url('/img2.jpg')",
+        overflow: "hidden",
       }}
     >
-      <div className="absolute inset-0 bg-black opacity-50 z-0" />
-      <div className="relative z-10">
-        <h1 className="text-white text-center pt-5">Dynamic Calendar App</h1>
+      <div className="absolute inset-0 bg-black opacity-50 z-0 overflow-hidden" />
+      <div className="relative z-10  items-center justify-center overflow-hidden">
+        <h1 className="text-white text-center pt-5 font-bold">
+          Dynamic Calendar App
+        </h1>
         <CalendarComponent />
       </div>
     </div>
