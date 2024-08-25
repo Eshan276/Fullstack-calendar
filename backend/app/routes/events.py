@@ -1,11 +1,15 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, BackgroundTasks
 from pydantic import BaseModel, EmailStr
 from app.database import event_collection, user_collection
 from bson import ObjectId
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import List, Optional
 from dateutil.rrule import rrule, rrulestr
-from datetime import timedelta
+import asyncio
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 router = APIRouter()
 
 
