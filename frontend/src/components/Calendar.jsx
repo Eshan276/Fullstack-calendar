@@ -125,11 +125,25 @@ const CalendarComponent = ({ userEmail }) => {
     setSelectedEvent(event); // Set the selected event for editing
     setModalIsOpen(true);
   };
+  const formatLocalDateTime = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
+    const milliseconds = String(date.getMilliseconds()).padStart(3, "0");
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.${milliseconds}Z`;
+  };
+
   const handleEventDrop = async ({ event, start, end }) => {
+    console.log(start, end);
+    console.log(start.toLocaleTimeString(), start.toISOString());
+    //return;
     const updatedEvent = {
       ...event,
-      start_time: start.toISOString(),
-      end_time: end.toISOString(),
+      start_time: formatLocalDateTime(start),
+      end_time: formatLocalDateTime(end),
     };
 
     try {
