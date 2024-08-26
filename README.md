@@ -39,8 +39,8 @@ A web-based calendar application built using FastAPI, MongoDB, and Vite.js. The 
 
 1. **Clone the repository:**
    ```bash
-   git clone <repository-url>
-   cd <repository-directory>/backend
+   git clone https://github.com/Eshan276/Fullstack-calendar.git
+   cd Fullstack-calendar/backend
    ```
 2. **Create and activate a virtual environment:**
    - THIS IS OPTIONAL BUT PREFFERED
