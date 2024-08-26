@@ -6,9 +6,6 @@ from datetime import datetime, timedelta
 from typing import List, Optional
 from dateutil.rrule import rrule, rrulestr
 import asyncio
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 
 router = APIRouter()
 
