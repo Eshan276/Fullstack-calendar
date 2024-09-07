@@ -15,6 +15,9 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import { darken } from "polished";
 import moment from "moment";
 // Date-fns localization
+let url = "http://localhost:8000";
+// url = "https://calenderbackend-ni7urrxez-eshan-das-projects.vercel.app";
+url = "https://calenderbackend-neg3jvtz1-eshan-das-projects.vercel.app";
 const locales = {
   "en-US": enUS,
 };
@@ -72,7 +75,9 @@ const CalendarComponent = ({ userEmail }) => {
 
   const fetchEvents = async () => {
     try {
-      const response = await axios.get("http://localhost:8000/user/events/", {
+      const finalink = `${url}/user/events/`;
+      console.log(finalink);
+      const response = await axios.get(`${url}/user/events/`, {
         params: { email: userEmail },
       });
       console.log(response.data);
@@ -147,13 +152,9 @@ const CalendarComponent = ({ userEmail }) => {
     };
 
     try {
-      await axios.put(
-        `http://localhost:8000/events/${event.id}/`,
-        updatedEvent,
-        {
-          params: { email: userEmail },
-        }
-      );
+      await axios.put(`${url}/events/${event.id}/`, updatedEvent, {
+        params: { email: userEmail },
+      });
       fetchEvents();
     } catch (error) {
       console.error("Error updating event:", error);
@@ -260,14 +261,12 @@ const CalendarComponent = ({ userEmail }) => {
     try {
       if (selectedEvent) {
         // Update the event
-        await axios.put(
-          `http://localhost:8000/events/${selectedEvent.id}/`,
-          eventData,
-          { params: { email: userEmail } }
-        );
+        await axios.put(`${url}/events/${selectedEvent.id}/`, eventData, {
+          params: { email: userEmail },
+        });
       } else {
         // Create a new event
-        await axios.post("http://localhost:8000/events/", eventData, {
+        await axios.post(`${url}/events/`, eventData, {
           params: { email: userEmail },
         });
       }
@@ -284,12 +283,9 @@ const CalendarComponent = ({ userEmail }) => {
   const handleDeleteEvent = async () => {
     if (selectedEvent) {
       try {
-        await axios.delete(
-          `http://localhost:8000/events/${selectedEvent.id}/`,
-          {
-            params: { email: userEmail },
-          }
-        );
+        await axios.delete(`${url}/events/${selectedEvent.id}/`, {
+          params: { email: userEmail },
+        });
         setModalIsOpen(false);
         fetchEvents();
       } catch (error) {
