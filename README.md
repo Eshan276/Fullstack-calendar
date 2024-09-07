@@ -2,6 +2,8 @@
 
 A web-based calendar application built using FastAPI, MongoDB, and Vite.js. The calendar supports day, week, and month views, allowing users to manage their schedules efficiently.
 
+- DEPLOYEDLINK:- [CLICK HERE](https://yourcalender.netlify.app/)
+
 ## Features
 
 1. **Dynamic Calendar Views**:
